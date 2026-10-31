@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Quiet Temple — Sit Together</title>
+  <meta name="description" content="A calm live temple hall. Sit together, walk, bow, count beads, and share a quiet moment.">
+  <meta property="og:title" content="Quiet Temple — Sit Together">
+  <meta property="og:description" content="A calm live temple hall for quiet moments together.">
+  <meta property="og:image" content="/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <style>
+    :root { color-scheme: dark; --gold:#e0a84a; --cream:#f5e8cb; --panel:rgba(25,18,15,.94); --line:rgba(236,204,150,.27); }
+    * { box-sizing:border-box; }
+    html,body { margin:0; width:100%; height:100%; overflow:hidden; background:#1a1410; color:var(--cream); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+    #hall { display:block; position:absolute; inset:0; width:100%; height:100%; touch-action:manipulation; }
+    #topbar { position:fixed; z-index:2; top:0; left:0; right:0; height:48px; display:flex; align-items:center; gap:9px; padding:6px 12px; white-space:nowrap; overflow:hidden; background:linear-gradient(180deg,rgba(20,14,12,.93),rgba(20,14,12,.70)); border-bottom:1px solid rgba(224,168,74,.24); }
+    #brand { color:var(--gold); font-weight:700; letter-spacing:.04em; flex:none; }
+    #roomName { overflow:hidden; text-overflow:ellipsis; }
+    #hallNumber,#online,#merit { font-variant-numeric:tabular-nums; }
+    .top-spacer { flex:1; }
+    #topbar button,.action-button,.panel button { font:inherit; color:var(--cream); background:rgba(95,62,42,.62); border:1px solid var(--line); border-radius:8px; padding:6px 10px; cursor:pointer; white-space:nowrap; }
+    #topbar button:hover,.action-button:hover,.panel button:hover { background:rgba(140,93,51,.78); }
+    #connection { position:fixed; z-index:2; top:56px; left:50%; transform:translateX(-50%); min-height:23px; max-width:92vw; padding:3px 10px; border-radius:12px; color:#ffe9b1; background:rgba(28,20,16,.72); font-size:12px; text-align:center; pointer-events:none; }
+    #bottomBar { position:fixed; z-index:2; bottom:0; left:0; right:0; display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:7px; padding:10px 10px calc(10px + env(safe-area-inset-bottom)); background:linear-gradient(0deg,rgba(20,14,12,.96),rgba(20,14,12,.77)); border-top:1px solid rgba(224,168,74,.24); }
+    .action-button { padding:8px 11px; min-height:38px; }
+    #merit { flex:none; padding:7px 9px; color:#f4d58d; border:1px solid rgba(224,168,74,.33); border-radius:8px; background:rgba(64,43,26,.68); white-space:nowrap; }
+    .panel-backdrop { position:fixed; z-index:5; inset:0; display:none; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,.55); }
+    .panel-backdrop.open { display:flex; }
+    .panel { width:min(480px,94vw); max-height:min(78vh,720px); overflow:auto; padding:18px; border:1px solid rgba(224,168,74,.44); border-radius:16px; background:var(--panel); box-shadow:0 18px 70px #0009; }
+    .panel h2 { margin:0 0 12px; color:var(--gold); font-size:19px; }
+    .panel p { color:#d5c8b3; line-height:1.5; margin:9px 0; }
+    .panel .close-row { display:flex; justify-content:flex-end; margin-top:14px; }
+    .list-row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 4px; border-bottom:1px solid rgba(236,204,150,.14); }
+    .list-row button { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+    .subtle { color:#b9aa96; font-size:13px; }
+    .setting-row { display:grid; grid-template-columns:1fr minmax(120px,1.2fr); gap:12px; align-items:center; padding:8px 0; }
+    .setting-row input[type=range] { width:100%; accent-color:var(--gold); }
+    .setting-row input[type=checkbox] { justify-self:start; accent-color:var(--gold); width:20px; height:20px; }
+    #releaseText { display:block; width:100%; min-height:105px; resize:none; border:1px solid rgba(236,204,150,.34); border-radius:8px; padding:10px; background:#17110f; color:#f5e8cb; font:inherit; transition:filter 2s ease,opacity 2s ease; }
+    #releaseText.fading { filter:blur(13px); opacity:0; }
+    #releaseText:focus { outline:2px solid rgba(224,168,74,.55); }
+    #releaseHint { font-size:12px; }
+    #beadOverlay { position:fixed; z-index:4; inset:0; display:none; align-items:center; justify-content:center; flex-direction:column; gap:16px; background:rgba(19,14,12,.90); }
+    #beadOverlay.open { display:flex; }
+    #beadCanvas { width:min(72vw,340px); height:min(72vw,340px); max-height:42vh; }
+    #beadCount { color:#f2d99c; font-size:20px; font-variant-numeric:tabular-nums; }
+    #toast { position:fixed; z-index:6; top:90px; left:50%; transform:translateX(-50%); max-width:90vw; padding:10px 15px; border-radius:12px; background:rgba(32,23,18,.94); border:1px solid rgba(224,168,74,.4); color:#ffe9b1; text-align:center; opacity:0; pointer-events:none; transition:opacity .25s; }
+    #toast.show { opacity:1; }
+    @media (max-width:600px) {
+      #topbar { height:44px; gap:7px; padding:5px 8px; font-size:13px; }
+      #roomName { display:none; }
+      #topbar button { font-size:13px; padding:5px 7px; }
+      #bottomBar { gap:5px; padding:7px 6px calc(7px + env(safe-area-inset-bottom)); }
+      .action-button { font-size:13px; padding:6px 8px; min-height:33px; }
+      #merit { font-size:13px; padding:6px 7px; }
+      #connection { top:50px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="hall" aria-label="Temple hall. Tap the floor to walk."></canvas>
+  <header id="topbar">
+    <span id="brand">Quiet Temple</span><span id="roomName">Lotus Hall</span><span id="hallNumber">Hall 1</span><span id="online">0 / 50</span>
+    <span class="top-spacer"></span>
+    <button type="button" data-panel="people" id="peopleButton">People</button>
+    <button type="button" data-panel="servers" id="serversButton">Halls</button>
+    <button type="button" data-panel="settings" id="settingsButton">Settings</button>
+  </header>
+  <div id="connection" aria-live="polite"></div>
+  <nav id="bottomBar" aria-label="Temple actions">
+    <button class="action-button" type="button" data-action="greet" id="greetButton">Greet</button>
+    <button class="action-button" type="button" data-action="bow" id="bowButton">Bow</button>
+    <button class="action-button" type="button" data-action="beads" id="beadsButton">Beads</button>
+    <button class="action-button" type="button" data-action="incense" id="incenseButton">Incense</button>
+    <button class="action-button" type="button" data-action="bell" id="bellButton">Bell</button>
+    <button class="action-button" type="button" data-action="release" id="releaseButton">Release</button>
+    <button class="action-button" type="button" data-action="photo" id="photoButton">Photo</button>
+    <span id="merit">Merit 0</span>
+  </nav>
+
+  <div class="panel-backdrop" id="panelBackdrop" role="dialog" aria-modal="true">
+    <section class="panel" id="panelContent"></section>
+  </div>
+  <div id="beadOverlay" aria-modal="true" role="dialog">
+    <canvas id="beadCanvas"></canvas>
+    <div id="beadCount">0 / 108</div>
+    <button class="action-button" type="button" id="beadBack">Back</button>
+  </div>
+  <div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  'use strict';
+  const CFG = { beads:108, bellTimes:['05:00','18:00'], bellStrikes:33, idleMinutes:5, residents:3, langs:['en','ko','zh'], contact:'report@example.com' };
+  const STRINGS = {
+    en: { brand:'Quiet Temple', people:'People', halls:'Halls', settings:'Settings', greet:'Greet', bow:'Bow', stand:'Stand up', beads:'Beads', incense:'Incense', bell:'Bell', release:'Release', photo:'Photo', merit:'Merit', hall:'Hall', online:'online', close:'Close', noPeople:'No visitors yet. Sit quietly together.', report:'Report abuse:', copy:'Copy name', copied:'Name copied.', copyFailed:'Could not copy the name.', ambient:'Ambient', chanting:'Chanting tones', effects:'Effects', scheduledBell:'Scheduled bell', settingsHint:'Sound settings are saved on this device.', noHalls:'No active halls yet.', chooseHall:'Choose a hall', releaseTitle:'Let something go', releaseHint:'These words stay on this device and are never sent.', releaseSend:'Release gently', releaseEmpty:'Write a few words first, or close this box.', releaseDone:'Released into the quiet.', shared:'shared a flame with you', full:'This hall is full. Looking for an open hall…', otherTab:'The temple is open in another tab.', connecting:'Finding a quiet place…', connected:'Together in the hall', disconnected:'Connection paused. Rejoining…', beadsTitle:'A quiet count', welcome:'Welcome', emptyHall:'Open hall', changingHall:'Opening hall' },
+    ko: { brand:'고요한 사원', people:'사람들', halls:'전각', settings:'설정', greet:'인사', bow:'절하기', stand:'일어서기', beads:'염주', incense:'향', bell:'종', release:'놓아주기', photo:'사진', merit:'공덕', hall:'전각', online:'접속', close:'닫기', noPeople:'아직 방문자가 없습니다. 함께 조용히 머물러 보세요.', report:'괴롭힘 신고:', copy:'이름 복사', copied:'이름을 복사했습니다.', copyFailed:'이름을 복사할 수 없습니다.', ambient:'배경음', chanting:'명상 음향', effects:'효과음', scheduledBell:'정시 종소리', settingsHint:'소리 설정은 이 기기에 저장됩니다.', noHalls:'열린 전각이 없습니다.', chooseHall:'전각 선택', releaseTitle:'마음을 놓아주세요', releaseHint:'이 글은 이 기기에만 머물며 전송되지 않습니다.', releaseSend:'조용히 놓아주기', releaseEmpty:'먼저 짧은 글을 적거나 닫아 주세요.', releaseDone:'고요 속으로 놓아주었습니다.', shared:'당신과 향을 나누었습니다', full:'전각이 가득 찼습니다. 빈 전각을 찾는 중…', otherTab:'사원이 다른 탭에서 열려 있습니다.', connecting:'고요한 자리를 찾는 중…', connected:'전각에서 함께 있습니다', disconnected:'연결이 끊겼습니다. 다시 연결합니다…', beadsTitle:'고요한 염주', welcome:'환영합니다', emptyHall:'빈 전각', changingHall:'전각을 여는 중' },
+    zh: { brand:'静心寺', people:'同坐者', halls:'殿堂', settings:'设置', greet:'问候', bow:'礼佛', stand:'起身', beads:'数珠', incense:'上香', bell:'钟声', release:'放下', photo:'留影', merit:'功德', hall:'殿', online:'在线', close:'关闭', noPeople:'暂时没有访客。欢迎在此安静共坐。', report:'举报不当行为：', copy:'复制名字', copied:'已复制名字。', copyFailed:'无法复制名字。', ambient:'环境音', chanting:'静心音', effects:'音效', scheduledBell:'定时钟声', settingsHint:'声音设置保存在本设备。', noHalls:'目前没有开放的殿堂。', chooseHall:'选择殿堂', releaseTitle:'把心事放下', releaseHint:'这些文字只会留在本设备上，绝不会发送。', releaseSend:'轻轻放下', releaseEmpty:'请先写几句话，或关闭此窗口。', releaseDone:'文字已化入宁静。', shared:'与你共燃一炷香', full:'这座殿堂已满，正在寻找空位……', otherTab:'寺庙已在另一个标签页开启。', connecting:'正在寻找一处安静的位置……', connected:'已与大家同在殿中', disconnected:'连接中断，正在重新加入……', beadsTitle:'静心数珠', welcome:'欢迎', emptyHall:'空殿堂', changingHall:'正在进入殿堂' }
+  };
+  const lang = (navigator.language || 'en').slice(0,2).toLowerCase();
+  const T = STRINGS[CFG.langs.includes(lang) ? lang : 'en'];
+  const el = id => document.getElementById(id);
+  const canvas = el('hall'); const ctx = canvas.getContext('2d');
+  const panelBackdrop = el('panelBackdrop'); const panelContent = el('panelContent');
+  let roomId = new URL(location.href).searchParams.get('room') || 'lotus';
+  let selectedInst = new URL(location.href).searchParams.has('inst') ? Number(new URL(location.href).searchParams.get('inst')) : null;
+  let roomName = roomId;
+  let cap = 50; let merit = 0; let self = null; const peers = new Map();
+  let socket = null; let connecting = false; let reconnectDelay = 1000; let reconnectTimer = null; let manualIdle = false; let fullNotice = false; let crossTab = false;
+  let lastPing = 0; let currentInst = selectedInst || 0; let fullOnClose = false; let wantedClose = false;
+  let target = null; let lastMoveSent = 0; let lastFrame = performance.now();
+  let beadCount = 0; let beadOpen = false; let toastTimer = null; let audioContext = null; let ambientGain = null; let chantGain = null; let effectsGain = null;
+  const bubbles = new Map(); const releases = new Map();
+  const saved = (() => { try { return JSON.parse(localStorage.getItem('quietTempleSettings') || '{}'); } catch { return {}; } })();
+  const soundSettings = { ambient:clamp01(saved.ambient,0.16), chanting:clamp01(saved.chanting,0.08), effects:clamp01(saved.effects,0.55), bell:saved.bell !== false };
+
+  function clamp01(v, fallback) { return Number.isFinite(v) ? Math.max(0,Math.min(1,v)) : fallback; }
+  function saveSettings() { try { localStorage.setItem('quietTempleSettings', JSON.stringify(soundSettings)); } catch {} }
+  function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function showToast(text) { const node=el('toast'); node.textContent=text; node.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>node.classList.remove('show'),2600); }
+  function updateStatus() {
+    const online=(self?1:0)+peers.size;
+    el('hallNumber').textContent=`${T.hall} ${currentInst+1}`;
+    el('online').textContent=`${online} / ${cap}`;
+    el('merit').textContent=`${T.merit} ${merit}`;
+    el('roomName').textContent=roomName;
+    el('connection').textContent=crossTab?T.otherTab:(fullNotice?T.full:(socket&&socket.readyState===WebSocket.OPEN?T.connected:(manualIdle?'':T.connecting)));
+    el('bowButton').textContent=self&&self.pose==='bow'?T.stand:T.bow;
+  }
+  function setLabels() {
+    document.title=`${T.brand} — ${T.hall}`;
+    el('brand').textContent=T.brand; el('peopleButton').textContent=T.people; el('serversButton').textContent=T.halls; el('settingsButton').textContent=T.settings;
+    el('greetButton').textContent=T.greet; el('bowButton').textContent=T.bow; el('beadsButton').textContent=T.beads; el('incenseButton').textContent=T.incense; el('bellButton').textContent=T.bell; el('releaseButton').textContent=T.release; el('photoButton').textContent=T.photo;
+  }
+  setLabels(); updateStatus();
+  fetch('/api/rooms').then(r=>r.json()).then(rooms=>{ const r=rooms.find(x=>x.id===roomId); if(r){roomName=r.name;cap=r.cap;updateStatus();} }).catch(()=>{});
+
+  function resize() {
+    const dpr=Math.min(window.devicePixelRatio||1,2); const w=window.innerWidth; const h=window.innerHeight;
+    canvas.width=Math.round(w*dpr); canvas.height=Math.round(h*dpr); canvas.style.width=`${w}px`; canvas.style.height=`${h}px`;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    draw();
+  }
+  window.addEventListener('resize',resize); resize();
+
+  function draw() {
+    const w=window.innerWidth,h=window.innerHeight; ctx.clearRect(0,0,w,h);
+    const grad=ctx.createLinearGradient(0,0,w,h); grad.addColorStop(0,'#261a14'); grad.addColorStop(.48,'#3c281c'); grad.addColorStop(1,'#211711'); ctx.fillStyle=grad; ctx.fillRect(0,0,w,h);
+    ctx.save(); ctx.globalAlpha=.18; ctx.strokeStyle='#9a6840'; ctx.lineWidth=1;
+    for(let y=54;y<h;y+=42){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+    for(let x=24;x<w;x+=93){ ctx.beginPath(); ctx.moveTo(x,48); ctx.lineTo(x,h-20); ctx.stroke(); }
+    for(let i=0;i<45;i++){ const x=(i*137+53)%Math.max(1,w),y=(i*79+67)%Math.max(1,h); ctx.fillStyle=i%2?'#c08a55':'#0d0907'; ctx.globalAlpha=.08; ctx.fillRect(x,y,18+(i%9)*5,1); }
+    ctx.restore();
+    const altarX=w/2, altarY=Math.max(106,h*.19);
+    ctx.save();
+    const glow=ctx.createRadialGradient(altarX,altarY,4,altarX,altarY,Math.max(95,w*.21)); glow.addColorStop(0,'rgba(239,185,88,.32)'); glow.addColorStop(1,'rgba(239,185,88,0)'); ctx.fillStyle=glow; ctx.fillRect(altarX-w*.3,altarY-h*.18,w*.6,h*.38);
+    ctx.fillStyle='#51321f'; ctx.fillRect(altarX-Math.min(155,w*.23),altarY+19,Math.min(310,w*.46),17);
+    ctx.fillStyle='#a96f37'; ctx.fillRect(altarX-Math.min(118,w*.18),altarY+37,Math.min(236,w*.36),12);
+    ctx.fillStyle='#744524'; ctx.beginPath(); ctx.moveTo(altarX-Math.min(130,w*.2),altarY+18); ctx.lineTo(altarX,altarY-42); ctx.lineTo(altarX+Math.min(130,w*.2),altarY+18); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='rgba(238,183,84,.88)'; ctx.beginPath(); ctx.arc(altarX,altarY-6,11,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#e7bf7e'; ctx.beginPath(); ctx.ellipse(altarX,altarY+17,25,10,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#bd8150'; ctx.beginPath(); ctx.ellipse(altarX,altarY+14,13,19,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#f2d9a2'; ctx.beginPath(); ctx.arc(altarX,altarY,8,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#3b2619'; ctx.beginPath(); ctx.arc(altarX,altarY-3,8,Math.PI,Math.PI*2); ctx.fill();
+    ctx.restore();
+    // Six columns by four rows of red cushions.
+    const cols=6, rows=4; const left=w*.13, right=w*.87, top=h*.50, bottom=h*.89;
+    for(let row=0;row<rows;row++) for(let col=0;col<cols;col++){
+      const x=left+(right-left)*(col/(cols-1)), y=top+(bottom-top)*(row/(rows-1));
+      ctx.save(); ctx.translate(x,y); ctx.fillStyle='#4d1716'; ctx.beginPath(); ctx.ellipse(0,5,Math.min(27,w*.043),12,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#8c2923'; ctx.beginPath(); ctx.ellipse(0,0,Math.min(25,w*.04),10,0,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='rgba(243,181,119,.3)'; ctx.lineWidth=1; ctx.beginPath(); ctx.ellipse(0,0,Math.min(17,w*.027),6,0,0,Math.PI*2); ctx.stroke(); ctx.restore();
+    }
+    const visitors=[]; if(self) visitors.push(self); for(const v of peers.values()) visitors.push(v);
+    visitors.sort((a,b)=>a.y-b.y).forEach(v=>drawVisitor(v,false));
+    if(peers.size===0){
+      const residentSpots=[[.30,.42],[.50,.57],[.70,.42]];
+      residentSpots.slice(0,CFG.residents).forEach(([x,y],i)=>drawVisitor({id:`resident${i}`,name:'',color:'#a89a8a',x,y,pose:'beads'},true));
+    }
+    const now=performance.now();
+    for(const [id,until] of [...bubbles]) if(until<=now) bubbles.delete(id); else {
+      const v=findVisitor(id); if(v){ const x=v.x*w,y=v.y*h-47; ctx.save(); ctx.font='24px system-ui'; ctx.textAlign='center'; ctx.fillText('🙏',x,y); ctx.restore(); }
+    }
+    for(const [id,start] of [...releases]){
+      const age=(now-start)/4000; if(age>=1){ releases.delete(id); continue; }
+      const v=findVisitor(id); if(!v) continue;
+      const x=v.x*w,y=v.y*h-38-age*200; ctx.save(); ctx.globalAlpha=(1-age)*.76; const rg=ctx.createRadialGradient(x,y,1,x,y,23); rg.addColorStop(0,'#fff4c8'); rg.addColorStop(.45,'#f7cd75'); rg.addColorStop(1,'rgba(244,181,74,0)'); ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(x,y,23,0,Math.PI*2); ctx.fill(); ctx.restore();
+    }
+    if(target){ ctx.save(); ctx.strokeStyle='rgba(255,226,159,.65)'; ctx.setLineDash([5,5]); ctx.beginPath(); ctx.arc(target.x*w,target.y*h,7,0,Math.PI*2); ctx.stroke(); ctx.restore(); }
+  }
+  function findVisitor(id){ if(self&&self.id===id)return self; return peers.get(id); }
+  function drawVisitor(v,resident){
+    const x=v.x*window.innerWidth,y=v.y*window.innerHeight;
+    ctx.save(); ctx.globalAlpha=resident?.55:1; ctx.translate(x,y);
+    const c=v.color||'#a89a8a';
+    if(v.pose==='bow'){
+      ctx.fillStyle=c; ctx.beginPath(); ctx.ellipse(0,0,18,9,-.12,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#f0d4b6'; ctx.beginPath(); ctx.arc(13,-4,8,0,Math.PI*2); ctx.fill();
+    } else if(v.pose==='beads'){
+      ctx.fillStyle=c; ctx.beginPath(); ctx.ellipse(0,0,14,11,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#f0d4b6'; ctx.beginPath(); ctx.arc(0,-15,9,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#ddbd79'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(0,1,11,.1,Math.PI*1.9); ctx.stroke();
+    } else {
+      ctx.fillStyle=c; ctx.beginPath(); ctx.ellipse(0,4,12,16,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#f0d4b6'; ctx.beginPath(); ctx.arc(0,-17,9,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#39251a'; ctx.beginPath(); ctx.arc(0,-20,9,Math.PI,Math.PI*2); ctx.fill();
+    }
+    if(!resident&&v.name){ ctx.font='12px system-ui'; ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.lineWidth=3; ctx.strokeStyle='rgba(24,16,12,.9)'; ctx.strokeText(v.name,0,-31); ctx.fillStyle='#f6e9cf'; ctx.fillText(v.name,0,-31); }
+    ctx.restore();
+  }
+
+  function ensureAudio(){
+    if(audioContext){ if(audioContext.state==='suspended') audioContext.resume().catch(()=>{}); return; }
+    const AC=window.AudioContext||window.webkitAudioContext; if(!AC)return;
+    audioContext=new AC();
+    ambientGain=audioContext.createGain(); ambientGain.gain.value=soundSettings.ambient*.035; ambientGain.connect(audioContext.destination);
+    chantGain=audioContext.createGain(); chantGain.gain.value=soundSettings.chanting*.027; chantGain.connect(audioContext.destination);
+    effectsGain=audioContext.createGain(); effectsGain.gain.value=soundSettings.effects*.17; effectsGain.connect(audioContext.destination);
+    [55,82.4].forEach((hz,i)=>{const o=audioContext.createOscillator();o.type='sine';o.frequency.value=hz;o.connect(i?chantGain:ambientGain);o.start();});
+    [220,329.6].forEach((hz,i)=>{const o=audioContext.createOscillator();o.type='sine';o.frequency.value=hz;o.connect(chantGain);o.start();});
+  }
+  function updateAudioGains(){ if(!audioContext)return; ambientGain.gain.setTargetAtTime(soundSettings.ambient*.035,audioContext.currentTime,.08); chantGain.gain.setTargetAtTime(soundSettings.chanting*.027,audioContext.currentTime,.08); effectsGain.gain.setTargetAtTime(soundSettings.effects*.17,audioContext.currentTime,.05); }
+  function tone({freq=440,duration=.12,type='sine',volume=.3,decay=true}={}){
+    ensureAudio(); if(!audioContext)return; const now=audioContext.currentTime;
+    const osc=audioContext.createOscillator(), gain=audioContext.createGain(); osc.type=type; osc.frequency.setValueAtTime(freq,now);
+    gain.gain.setValueAtTime(Math.max(.0001,volume),now);
+    if(decay)gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+    osc.connect(gain); gain.connect(effectsGain); osc.start(now); osc.stop(now+duration+.03);
+  }
+  function playBell(){ tone({freq:523.25,duration:2.8,type:'sine',volume:.28}); tone({freq:783.99,duration:2.3,type:'sine',volume:.13}); }
+  function clickTone(){ tone({freq:640,duration:.07,type:'sine',volume:.15}); }
+  document.addEventListener('pointerdown',ensureAudio,{once:true});
+
+  function setPanel(html){ panelContent.innerHTML=html; panelBackdrop.classList.add('open'); }
+  function closePanel(){ panelBackdrop.classList.remove('open'); }
+  panelBackdrop.addEventListener('click',e=>{if(e.target===panelBackdrop)closePanel();});
+  document.querySelectorAll('[data-panel]').forEach(button=>button.addEventListener('click',()=>openPanel(button.dataset.panel)));
+  function openPanel(type){
+    if(type==='people'){
+      const visitors=[]; if(self)visitors.push(self); visitors.push(...peers.values());
+      const rows=visitors.map(v=>`<div class="list-row"><span>${escapeHtml(v.name)}${self&&v.id===self.id?' · '+escapeHtml(T.welcome):''}</span><button type="button" data-copy="${escapeHtml(v.id)}">${escapeHtml(T.copy)}</button></div>`).join('');
+      setPanel(`<h2>${escapeHtml(T.people)}</h2>${rows||`<p>${escapeHtml(T.noPeople)}</p>`}<p class="subtle">${escapeHtml(T.report)} <a href="mailto:${escapeHtml(CFG.contact)}" style="color:#efc77a">${escapeHtml(CFG.contact)}</a></p><div class="close-row"><button type="button" data-close>${escapeHtml(T.close)}</button></div>`);
+      panelContent.querySelectorAll('[data-copy]').forEach(btn=>btn.addEventListener('click',async()=>{const v=findVisitor(btn.dataset.copy);try{await navigator.clipboard.writeText(v.name);showToast(T.copied);}catch{showToast(T.copyFailed);}}));
+    } else if(type==='servers'){
+      setPanel(`<h2>${escapeHtml(T.chooseHall)}</h2><div id="hallRows"><p class="subtle">${escapeHtml(T.connecting)}</p></div><div class="close-row"><button type="button" data-close>${escapeHtml(T.close)}</button></div>`);
+      fetch('/api/rooms').then(r=>r.json()).then(rooms=>{
+        if(!panelBackdrop.classList.contains('open'))return;
+        const list=rooms.map(room=>{
+          const insts=room.instances.length?room.instances:[{inst:0,count:0,cap:room.cap}];
+          return insts.map(instance=>`<div class="list-row"><span>${escapeHtml(room.name)} · ${escapeHtml(T.hall)} ${instance.inst+1} · ${instance.count} / ${instance.cap}</span><button type="button" data-room="${escapeHtml(room.id)}" data-inst="${instance.inst}">${escapeHtml(T.chooseHall)}</button></div>`).join('');
+        }).join('');
+        el('hallRows').innerHTML=list||`<p>${escapeHtml(T.noHalls)}</p>`;
+        el('hallRows').querySelectorAll('[data-room]').forEach(btn=>btn.addEventListener('click',()=>{const url=new URL(location.href);url.searchParams.set('room',btn.dataset.room);url.searchParams.set('inst',btn.dataset.inst);location.href=url.pathname+url.search;}));
+      }).catch(()=>{el('hallRows').innerHTML=`<p>${escapeHtml(T.noHalls)}</p>`;});
+    } else {
+      setPanel(`<h2>${escapeHtml(T.settings)}</h2>
+        <label class="setting-row"><span>${escapeHtml(T.ambient)}</span><input type="range" min="0" max="1" step="0.05" value="${soundSettings.ambient}" data-setting="ambient"></label>
+        <label class="setting-row"><span>${escapeHtml(T.chanting)}</span><input type="range" min="0" max="1" step="0.05" value="${soundSettings.chanting}" data-setting="chanting"></label>
+        <label class="setting-row"><span>${escapeHtml(T.effects)}</span><input type="range" min="0" max="1" step="0.05" value="${soundSettings.effects}" data-setting="effects"></label>
+        <label class="setting-row"><span>${escapeHtml(T.scheduledBell)}</span><input type="checkbox" data-setting="bell" ${soundSettings.bell?'checked':''}></label>
+        <p class="subtle">${escapeHtml(T.settingsHint)}</p><div class="close-row"><button type="button" data-close>${escapeHtml(T.close)}</button></div>`);
+      panelContent.querySelectorAll('[data-setting]').forEach(input=>input.addEventListener('input',()=>{const k=input.dataset.setting;soundSettings[k]=k==='bell'?input.checked:Number(input.value);saveSettings();updateAudioGains();}));
+      panelContent.querySelector('[data-setting="bell"]').addEventListener('change',e=>{soundSettings.bell=e.target.checked;saveSettings();});
+    }
+    const close=panelContent.querySelector('[data-close]'); if(close)close.addEventListener('click',closePanel);
+  }
+
+  function sendMessage(message){ if(socket&&socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify(message)); }
+  function connectAndWait(){
+    return new Promise(resolve=>{
+      const scheme=location.protocol==='https:'?'wss:':'ws:'; const q=new URLSearchParams(); q.set('room',roomId); if(selectedInst!==null&&Number.isInteger(selectedInst))q.set('inst',String(selectedInst));
+      const ws=new WebSocket(`${scheme}//${location.host}/ws?${q.toString()}`); socket=ws; connecting=true; fullOnClose=false; wantedClose=false; updateStatus();
+      let settled=false;
+      const finish=()=>{if(settled)return;settled=true;if(socket===ws)socket=null;connecting=false;resolve();};
+      ws.addEventListener('message',event=>{
+        let m;try{m=JSON.parse(event.data);}catch{return;}
+        if(m.t==='welcome'){
+          self=m.self;peers.clear();for(const v of m.peers||[])peers.set(v.id,v);roomId=m.room;currentInst=m.inst;cap=m.cap;merit=m.merit;reconnectDelay=1000;fullNotice=false;crossTab=false;
+          const url=new URL(location.href);url.searchParams.set('room',roomId);url.searchParams.set('inst',String(currentInst));history.replaceState({},'',url.pathname+url.search);
+          updateStatus();draw();
+        } else if(m.t==='join'){peers.set(m.peer.id,m.peer);updateStatus();draw();}
+        else if(m.t==='leave'){peers.delete(m.id);updateStatus();draw();}
+        else if(m.t==='move'){const v=peers.get(m.id);if(v){v.x=m.x;v.y=m.y;v.pose='stand';draw();}}
+        else if(m.t==='act'){
+          const v=findVisitor(m.id);if(v){if(m.a==='bow')v.pose='bow';if(m.a==='stand')v.pose='stand';if(m.a==='beads')v.pose='beads';if(m.a==='greet')bubbles.set(m.id,performance.now()+3000);if(m.a==='release')releases.set(m.id,performance.now());if(m.a==='incense'&&m.to===self?.id)showToast(`${v.name} ${T.shared}`);draw();}
+        } else if(m.t==='merit'){merit=m.merit;updateStatus();}
+        else if(m.t==='full'){fullNotice=true;updateStatus();}
+        else if(m.t==='pong'){lastPing=Date.now();}
+      });
+      ws.addEventListener('error',()=>{});
+      ws.addEventListener('close',event=>{
+        if(event.code===4004){const url=new URL(location.href);url.searchParams.delete('room');url.searchParams.delete('inst');history.replaceState({},'',url.pathname+url.search);roomId='lotus';selectedInst=null;fullNotice=false;}
+        else if(event.code===4009){fullOnClose=true;fullNotice=true;}
+        finish();
+      });
+      ws.__finish=finish;
+    });
+  }
+  function canConnect(){return !manualIdle&&document.visibilityState==='visible';}
+  async function attemptConnection(){
+    if(connecting||socket||!canConnect())return;
+    clearTimeout(reconnectTimer);
+    if(navigator.locks&&navigator.locks.request){
+      try{
+        await navigator.locks.request('quiet-temple-live-socket',{ifAvailable:true},async lock=>{
+          if(!lock){crossTab=true;updateStatus();reconnectTimer=setTimeout(attemptConnection,2500);return;}
+          crossTab=false;updateStatus();await connectAndWait();
+        });
+      }catch{await connectAndWait();}
+    } else { await connectAndWait(); }
+    if(!canConnect())return;
+    let wait;
+    if(fullOnClose){wait=10000;fullOnClose=false;}
+    else { wait=reconnectDelay*(.75+Math.random()*.5);reconnectDelay=Math.min(15000,reconnectDelay*2); }
+    reconnectTimer=setTimeout(attemptConnection,wait);
+    updateStatus();
+  }
+  function startConnection(){if(!connecting&&!socket&&!manualIdle)attemptConnection();}
+  setTimeout(startConnection,0);
+  setInterval(()=>{if(socket&&socket.readyState===WebSocket.OPEN)sendMessage({t:'ping'});},25000);
+
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='hidden'){
+      document.__hiddenAt=Date.now();
+      setTimeout(()=>{
+        if(document.visibilityState==='hidden'&&Date.now()-document.__hiddenAt>=CFG.idleMinutes*60000){manualIdle=true;if(socket){wantedClose=true;socket.close(1000,'Hidden idle timeout');}}
+      },CFG.idleMinutes*60000+50);
+    } else {
+      document.__hiddenAt=0;
+      if(manualIdle){manualIdle=false;reconnectDelay=1000;startConnection();}
+      updateStatus();
+    }
+  });
+
+  canvas.addEventListener('pointerdown',e=>{
+    if(e.target!==canvas)return; ensureAudio();
+    const rect=canvas.getBoundingClientRect(); target={x:Math.max(.02,Math.min(.98,(e.clientX-rect.left)/rect.width)),y:Math.max(.30,Math.min(.94,(e.clientY-rect.top)/rect.height))};
+    if(self){self.pose='stand';updateStatus();}
+    clickTone(); draw();
+  });
+  function animate(now){
+    const dt=Math.min(.05,(now-lastFrame)/1000);lastFrame=now;
+    if(self&&target){
+      const dx=target.x-self.x,dy=target.y-self.y,d=Math.hypot(dx,dy),step=.28*dt;
+      if(d<=step){self.x=target.x;self.y=target.y;target=null;}else{self.x+=dx/d*step;self.y+=dy/d*step;}
+      if(now-lastMoveSent>125){sendMessage({t:'move',x:self.x,y:self.y});lastMoveSent=now;}
+    }
+    draw(); requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
+
+  document.querySelectorAll('[data-action]').forEach(button=>button.addEventListener('click',()=>{
+    ensureAudio();const action=button.dataset.action;
+    if(action==='photo'){canvas.toBlob(blob=>{if(!blob)return;const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='quiet-temple.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);},'image/png');return;}
+    if(action==='beads'){openBeads();return;}
+    if(action==='release'){openRelease();return;}
+    if(action==='bow'){
+      const next=self&&self.pose==='bow'?'stand':'bow';if(self)self.pose=next;sendMessage({t:'act',a:next});updateStatus();draw();tone({freq:392,duration:.18,volume:.18});return;
+    }
+    if(action==='incense'){
+      let nearest=null,best=Infinity;if(self)for(const v of peers.values()){const d=Math.hypot(v.x-self.x,v.y-self.y);if(d<best){best=d;nearest=v;}}
+      const msg={t:'act',a:'incense'};if(nearest&&best<=.12)msg.to=nearest.id;sendMessage(msg);tone({freq:466,duration:.28,volume:.16});return;
+    }
+    if(action==='bell'){sendMessage({t:'act',a:'bell'});playBell();return;}
+    if(action==='greet'){bubbles.set(self?.id,performance.now()+3000);sendMessage({t:'act',a:'greet'});tone({freq:587,duration:.12,volume:.2});draw();return;}
+  }));
+
+  function openBeads(){beadOpen=true;beadCount=0;el('beadOverlay').classList.add('open');el('beadCount').textContent=`${beadCount} / ${CFG.beads}`;sendMessage({t:'act',a:'beads'});if(self)self.pose='beads';drawBeads();draw();}
+  function drawBeads(){
+    const c=el('beadCanvas'),r=c.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);c.width=Math.max(1,Math.round(r.width*dpr));c.height=Math.max(1,Math.round(r.height*dpr));const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);const w=r.width,h=r.height,cx=w/2,cy=h/2,rad=Math.min(w,h)*.37;
+    g.clearRect(0,0,w,h);g.strokeStyle='rgba(226,184,112,.22)';g.lineWidth=1;g.beginPath();g.arc(cx,cy,rad,0,Math.PI*2);g.stroke();
+    for(let i=0;i<CFG.beads;i++){const a=-Math.PI/2+i/CFG.beads*Math.PI*2,x=cx+Math.cos(a)*rad,y=cy+Math.sin(a)*rad;g.beginPath();g.fillStyle=i<beadCount?'#f5d994':'#8f6241';g.arc(x,y,i<beadCount?3:2.2,0,Math.PI*2);g.fill();}
+    g.fillStyle='#e0a84a';g.beginPath();g.arc(cx,cy,7,0,Math.PI*2);g.fill();
+  }
+  el('beadCanvas').addEventListener('pointerdown',()=>{if(!beadOpen)return;ensureAudio();beadCount=beadCount>=CFG.beads?1:beadCount+1;el('beadCount').textContent=`${beadCount} / ${CFG.beads}`;drawBeads();clickTone();sendMessage({t:'bead'});});
+  el('beadBack').textContent=T.close;
+  el('beadBack').addEventListener('click',()=>{beadOpen=false;el('beadOverlay').classList.remove('open');sendMessage({t:'act',a:'stand'});if(self)self.pose='stand';draw();});
+
+  function openRelease(){
+    setPanel(`<h2>${escapeHtml(T.releaseTitle)}</h2><textarea id="releaseText" maxlength="300" aria-label="${escapeHtml(T.releaseTitle)}"></textarea><p id="releaseHint" class="subtle">${escapeHtml(T.releaseHint)}</p><div class="close-row"><button type="button" id="releaseCancel">${escapeHtml(T.close)}</button><button type="button" id="releaseSend">${escapeHtml(T.releaseSend)}</button></div>`);
+    el('releaseCancel').addEventListener('click',closePanel);
+    el('releaseSend').addEventListener('click',()=>{
+      const box=el('releaseText');if(!box.value.trim()){showToast(T.releaseEmpty);return;}
+      // The release text is deliberately kept only in this textarea; it is never read into a network message.
+      box.disabled=true;box.classList.add('fading');el('releaseSend').disabled=true;
+      setTimeout(()=>{box.value='';box.remove();sendMessage({t:'act',a:'release'});if(self)releases.set(self.id,performance.now());showToast(T.releaseDone);closePanel();draw();},2000);
+    });
+  }
+
+  let lastBellMinute='';
+  setInterval(()=>{
+    if(!soundSettings.bell)return;
+    const d=new Date(),hh=String(d.getHours()).padStart(2,'0'),mm=String(d.getMinutes()).padStart(2,'0'),key=`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${hh}:${mm}`;
+    const scheduled=CFG.bellTimes.includes(`${hh}:${mm}`);
+    if(scheduled&&lastBellMinute!==key){lastBellMinute=key;ensureAudio();for(let i=0;i<CFG.bellStrikes;i++)setTimeout(playBell,i*5000);}
+  },15000);
+})();
+</script>
+</body>
+</html>
